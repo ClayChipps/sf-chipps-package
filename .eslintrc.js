@@ -9,7 +9,7 @@ module.exports = {
         [
           '',
           {
-            pattern: ' \\* Copyright \\(c\\) \\d{4}, Clay Chipps\\',
+            pattern: ' \\* Copyright \\(c\\) \\d{4}, Clay Chipps',
             template: ' * Copyright (c) 2023, Clay Chipps',
           },
           ' * All rights reserved.',
