@@ -54,14 +54,14 @@ export default class ChippsPackageVersionCleanup extends SfCommand<ChippsPackage
 
     const { flags } = await this.parse(ChippsPackageVersionCleanup);
 
-    // Initialize the authorization for the provided username
-    const authInfo = await AuthInfo.create({ username: flags['target-dev-hub'] });
+    // Initialize the authorization for the target dev hub
+    const targetDevHubAuthInfo = await AuthInfo.create({ username: flags['target-dev-hub'] });
 
     // Create a connection to the org
-    const connection = await Connection.create({ authInfo });
+    const connection = await Connection.create({ authInfo: targetDevHubAuthInfo });
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const project = this.project!;
+    const project = this.project;
 
     const matcher = flags.matcher;
 
