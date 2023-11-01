@@ -18,13 +18,13 @@ import {
 Messages.importMessagesDirectory(__dirname);
 const messages = Messages.loadMessages('sf-chipps-package', 'chipps.package.version.cleanup');
 
-export type ChippsPackageVersionCleanupResult = {
+export type PackageVersionCleanupResult = {
   Error?: string;
   Success: boolean;
   SubscriberPackageVersionId: string;
 };
 
-export default class ChippsPackageVersionCleanup extends SfCommand<ChippsPackageVersionCleanupResult[]> {
+export default class PackageVersionCleanup extends SfCommand<PackageVersionCleanupResult[]> {
   public static readonly summary = messages.getMessage('summary');
   public static readonly description = messages.getMessage('description');
   public static readonly examples = messages.getMessages('examples');
@@ -49,10 +49,10 @@ export default class ChippsPackageVersionCleanup extends SfCommand<ChippsPackage
     }),
   };
 
-  public async run(): Promise<ChippsPackageVersionCleanupResult[]> {
+  public async run(): Promise<PackageVersionCleanupResult[]> {
     const log = await Logger.child(this.ctor.name);
 
-    const { flags } = await this.parse(ChippsPackageVersionCleanup);
+    const { flags } = await this.parse(PackageVersionCleanup);
 
     // Initialize the authorization for the target dev hub
     const targetDevHubAuthInfo = await AuthInfo.create({ username: flags['target-dev-hub'] });
@@ -60,7 +60,6 @@ export default class ChippsPackageVersionCleanup extends SfCommand<ChippsPackage
     // Create a connection to the org
     const connection = await Connection.create({ authInfo: targetDevHubAuthInfo });
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const project = this.project;
 
     const matcher = flags.matcher;
@@ -111,7 +110,7 @@ export default class ChippsPackageVersionCleanup extends SfCommand<ChippsPackage
       packageVersionDeletePromiseRequests.push(new PackageVersion(packageVersionOptions).delete());
     });
 
-    const results: ChippsPackageVersionCleanupResult[] = [];
+    const results: PackageVersionCleanupResult[] = [];
 
     const promiseResults = await Promise.allSettled(packageVersionDeletePromiseRequests);
 
@@ -138,7 +137,7 @@ export default class ChippsPackageVersionCleanup extends SfCommand<ChippsPackage
     return results;
   }
 
-  private displayDeletionResults(packageCleanupResults: ChippsPackageVersionCleanupResult[]): void {
+  private displayDeletionResults(packageCleanupResults: PackageVersionCleanupResult[]): void {
     this.styledHeader('Package Version Cleanup Results');
     this.table(packageCleanupResults, {
       SubscriberPackageVersionId: { header: 'PACKAGE VERSION ID' },
