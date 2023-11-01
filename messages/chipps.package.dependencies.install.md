@@ -6,10 +6,6 @@ Install package dependencies for a Salesforce project.
 
 Installs all specified package dependencies in a Salesforce DX project using the sfdx-project.json definition.
 
-# packageInstallSuccess
-
-Successfully installed package [%s]
-
 # flags.branch.summary
 
 Package branch to consider when specifiyng a Package/VersionNumber combination
@@ -62,6 +58,14 @@ Maximum number of minutes to wait for the Subscriber Package Version ID to becom
 
 Security access type for the installed package. (deprecation notice: The default --security-type value will change from AllUsers to AdminsOnly in v47.0 or later.)
 
+# flags.skip-handlers.summary
+
+Skip install handlers (available handlers: FeatureEnforcement).
+
+# flags.skip-handlers.description
+
+Allows the installer of a package to optionally skip install handlers in order to decrease overall installation time (available handlers: FeatureEnforcement).
+
 # flags.target-dev-hub.summary
 
 Username or alias of the Dev Hub org.
@@ -112,6 +116,53 @@ No SubscriberPackageVersionId could be inferred from the dependencies.
 
 Encountered errors installing the package! %s
 
-# error.packageInstallTimeout
+# error.packageInstallPollingTimeout
 
-The installation of package %s did not complete within the timeout specified
+Polling timeout exceeded
+
+# info.canceledPackageInstall
+
+We canceled this package installation per your request.
+
+# info.packageInstallSuccess
+
+Successfully installed package [%s]
+
+# info.availableForInstallation
+
+Available for installation
+
+# info.packageInstallInProgress
+
+PackageInstallRequest is currently InProgress. You can continue to query the status using
+%s package:install:report -i %s -o %s
+
+# info.packageInstallWaiting
+
+Waiting %s minutes for package install to complete.
+
+# info.packageInstallWaitingStatus
+
+%d minutes remaining until timeout. Install status: %s
+
+# info.packagePublishWaitingStatus
+
+%d minutes remaining until timeout. Publish status: %s
+
+# info.unavailableForInstallation
+
+Unavailable for installation
+
+# prompt.enableRss
+
+This package might send or receive data from these third-party websites:
+
+[%s]
+
+Grant access (y/n)?
+
+# prompt.upgradeType
+
+The Delete upgrade type permanently deletes metadata types that have been removed from the package. Deleted metadata can’t be recovered. We don't delete custom objects and custom fields. Instead, we deprecate them.
+
+Do you want to continue? (y/n)

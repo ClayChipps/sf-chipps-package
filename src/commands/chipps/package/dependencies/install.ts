@@ -6,13 +6,16 @@
  */
 
 /* eslint-disable complexity */
+/* eslint-disable no-await-in-loop */
+/* eslint-disable no-unsafe-finally */
 import { SfCommand, Flags } from '@salesforce/sf-plugins-core';
-import { AuthInfo, Connection, Messages, Lifecycle, Logger, PackageDirDependency } from '@salesforce/core';
+import { AuthInfo, Connection, Messages, Lifecycle, PackageDirDependency, SfError } from '@salesforce/core';
 import { Duration } from '@salesforce/kit';
 import {
   InstalledPackages,
   PackageEvents,
   PackageInstallCreateRequest,
+  PackageInstallOptions,
   SubscriberPackageVersion,
   PackagingSObjects,
 } from '@salesforce/packaging';
@@ -38,7 +41,6 @@ const installType = { All: 'all', Delta: 'delta' };
 const securityType = { AllUsers: 'full', AdminsOnly: 'none' };
 const upgradeType = { Delete: 'delete-only', DeprecateOnly: 'deprecate-only', Mixed: 'mixed-mode' };
 
-const defaultWait = 10;
 const installationKeyRegex = new RegExp(/^(\w+:\w+)(,\s*\w+:\w+)*/);
 
 export default class ChippsPackageDependenciesInstall extends SfCommand<PackageInstallRequest[]> {
@@ -94,6 +96,14 @@ export default class ChippsPackageDependenciesInstall extends SfCommand<PackageI
       summary: messages.getMessage('flags.security-type.summary'),
       default: 'AdminsOnly',
     }),
+    'skip-handlers': Flags.string({
+      multiple: true,
+      options: ['FeatureEnforcement'],
+      char: 'l',
+      summary: messages.getMessage('flags.skip-handlers.summary'),
+      description: messages.getMessage('flags.skip-handlers.description'),
+      hidden: true,
+    }),
     'target-dev-hub': Flags.string({
       summary: messages.getMessage('flags.target-dev-hub.summary'),
       char: 'v',
@@ -119,9 +129,9 @@ export default class ChippsPackageDependenciesInstall extends SfCommand<PackageI
     }),
   };
 
-  public async run(): Promise<PackageInstallRequest[]> {
-    const log = await Logger.child(this.ctor.name);
+  private subscriberPackageVersion!: SubscriberPackageVersion;
 
+  public async run(): Promise<PackageInstallRequest[]> {
     const { flags } = await this.parse(ChippsPackageDependenciesInstall);
 
     // Authorize to the target org
@@ -138,7 +148,7 @@ export default class ChippsPackageDependenciesInstall extends SfCommand<PackageI
     const project = this.project;
 
     let packagesToInstall: PackageToInstall[] = [];
-    const packagesInstallRequests: PackageInstallRequest[] = [];
+    const packageInstallRequests: PackageInstallRequest[] = [];
     const dependenciesForDevHubResolution: PackageDirDependency[] = [];
 
     const packageAliases = project.getPackageAliases();
@@ -207,7 +217,6 @@ export default class ChippsPackageDependenciesInstall extends SfCommand<PackageI
           packageVersionId = packageAliases?.[packageVersionId] as string;
         }
 
-        // eslint-disable-next-line no-await-in-loop
         packageVersionId = await resolvePackageVersionId(pakage, versionNumber, flags.branch, devHubConnection);
       }
     }
@@ -283,88 +292,150 @@ export default class ChippsPackageDependenciesInstall extends SfCommand<PackageI
 
         this.spinner.start(`Installing package ${packageToInstall.PackageName}...`);
 
-        // eslint-disable-next-line no-await-in-loop
-        const packageInstallRequest = await this.installPackageVersion(
-          targetOrgConnection,
-          packageToInstall,
-          installationKey
-        );
+        this.subscriberPackageVersion = new SubscriberPackageVersion({
+          connection: targetOrgConnection,
+          aliasOrId: packageToInstall?.SubscriberPackageVersionId,
+          password: installationKey,
+        });
 
-        if (packageInstallRequest.Status === 'SUCCESS') {
-          packagesInstallRequests.push(packageInstallRequest);
-          this.spinner.start(messages.getMessage('packageInstallSuccess', [packageToInstall.PackageName]));
-        } else if (['IN_PROGRESS', 'UNKNOWN'].includes(packageInstallRequest.Status)) {
-          throw messages.createError('error.packageInstallTimeout', [packageToInstall.PackageName]);
-        } else {
-          throw messages.createError('error.packageInstall', [
-            reducePackageInstallRequestErrors(packageInstallRequest),
-          ]);
+        const request: PackageInstallCreateRequest = {
+          SubscriberPackageVersionKey: await this.subscriberPackageVersion.getId(),
+          Password: installationKey,
+          ApexCompileType: flags['apex-compile'],
+          SecurityType: securityType[flags['security-type']] as PackageInstallCreateRequest['SecurityType'],
+          SkipHandlers: flags['skip-handlers']?.join(','),
+          UpgradeType: upgradeType[flags['upgrade-type']] as PackageInstallCreateRequest['UpgradeType'],
+        };
+
+        // eslint-disable-next-line @typescript-eslint/require-await
+        Lifecycle.getInstance().on(PackageEvents.install.warning, async (warningMsg: string) => {
+          this.warn(warningMsg);
+        });
+
+        if (flags['publish-wait']?.milliseconds > 0) {
+          let timeThen = Date.now();
+          // waiting for publish to finish
+          let remainingTime = flags['publish-wait'];
+
+          Lifecycle.getInstance().on(
+            PackageEvents.install['subscriber-status'],
+            // eslint-disable-next-line @typescript-eslint/require-await
+            async (publishStatus: PackagingSObjects.InstallValidationStatus) => {
+              const elapsedTime = Duration.milliseconds(Date.now() - timeThen);
+              timeThen = Date.now();
+              remainingTime = Duration.milliseconds(remainingTime.milliseconds - elapsedTime.milliseconds);
+              const status =
+                publishStatus === 'NO_ERRORS_DETECTED'
+                  ? messages.getMessage('info.availableForInstallation')
+                  : messages.getMessage('info.unavailableForInstallation');
+              this.spinner.status = messages.getMessage('info.packagePublishWaitingStatus', [
+                remainingTime.minutes,
+                status,
+              ]);
+            }
+          );
+
+          this.spinner.start(
+            messages.getMessage('info.packagePublishWaitingStatus', [remainingTime.minutes, 'Querying Status'])
+          );
+
+          await this.subscriberPackageVersion.waitForPublish({
+            publishTimeout: flags['publish-wait'],
+            publishFrequency: Duration.seconds(10),
+            installationKey,
+          });
+
+          // need to stop the spinner to avoid weird behavior with the prompts below
+          this.spinner.stop();
+        }
+
+        // If the user has specified --upgradetype Delete, then prompt for confirmation
+        // unless the noprompt option has been included.
+        if (flags['upgrade-type'] === 'Delete') {
+          if ((await this.subscriberPackageVersion.getPackageType()) === 'Unlocked' && !flags['no-prompt']) {
+            const promptMsg = messages.getMessage('prompt.upgradeType');
+            if (!(await this.confirm(promptMsg))) {
+              throw messages.createError('info.canceledPackageInstall');
+            }
+          }
+        }
+
+        // If the package has external sites, ask the user for permission to enable them
+        // unless the noprompt option has been included.
+        const extSites = await this.subscriberPackageVersion.getExternalSites();
+        if (extSites) {
+          let enableRss = true;
+          if (!flags['no-prompt']) {
+            const promptMsg = messages.getMessage('prompt.enableRss', [extSites.join('\n')]);
+            enableRss = await this.confirm(promptMsg);
+          }
+          if (enableRss) {
+            request.EnableRss = enableRss;
+          }
+        }
+
+        let installOptions: Optional<PackageInstallOptions>;
+        if (flags.wait) {
+          installOptions = {
+            pollingTimeout: flags.wait,
+            pollingFrequency: Duration.seconds(2),
+          };
+          let remainingTime = flags.wait;
+          let timeThen = Date.now();
+          this.spinner.start(messages.getMessage('info.packageInstallWaiting', [remainingTime.minutes]));
+
+          // waiting for package install to finish
+          Lifecycle.getInstance().on(
+            PackageEvents.install.status,
+            // eslint-disable-next-line @typescript-eslint/require-await
+            async (piRequest: PackageInstallRequest) => {
+              const elapsedTime = Duration.milliseconds(Date.now() - timeThen);
+              timeThen = Date.now();
+              remainingTime = Duration.milliseconds(remainingTime.milliseconds - elapsedTime.milliseconds);
+              this.spinner.status = messages.getMessage('info.packageInstallWaitingStatus', [
+                remainingTime.minutes,
+                piRequest.Status,
+              ]);
+            }
+          );
+        }
+
+        let pkgInstallRequest: Optional<PackageInstallRequest>;
+        try {
+          pkgInstallRequest = await this.subscriberPackageVersion.install(request, installOptions);
+          this.spinner.stop();
+        } catch (error: unknown) {
+          if (error instanceof SfError && error.data) {
+            pkgInstallRequest = error.data as PackageInstallRequest;
+            this.spinner.stop(messages.getMessage('error.packageInstallPollingTimeout'));
+          } else {
+            throw error;
+          }
+        } finally {
+          if (pkgInstallRequest) {
+            if (pkgInstallRequest.Status === 'SUCCESS') {
+              packageInstallRequests.push(pkgInstallRequest);
+              this.log(messages.getMessage('info.packageInstallSuccess', [packageToInstall.PackageName]));
+            } else if (['IN_PROGRESS', 'UNKNOWN'].includes(pkgInstallRequest.Status)) {
+              this.log(
+                messages.getMessage('info.packageInstallInProgress', [
+                  this.config.bin,
+                  pkgInstallRequest.Id,
+                  targetOrgConnection.getUsername() as string,
+                ])
+              );
+            } else {
+              throw messages.createError('error.packageInstall', [
+                reducePackageInstallRequestErrors(pkgInstallRequest),
+              ]);
+            }
+          }
         }
       }
     } else {
-      this.ux.log('No packages were found to install');
+      this.spinner.stop('No packages were found to install');
     }
 
-    return packagesInstallRequests;
-  }
-
-  protected async finally(err: Optional<Error>): Promise<void> {
-    // Remove all the event listeners or they will still handle events
-    Lifecycle.getInstance().removeAllListeners(PackageEvents.install.warning);
-    Lifecycle.getInstance().removeAllListeners(PackageEvents.install.status);
-    Lifecycle.getInstance().removeAllListeners(PackageEvents.install['subscriber-status']);
-    await super.finally(err);
-  }
-
-  private async installPackageVersion(
-    connection: Connection,
-    packageToInstall: PackageToInstall,
-    installationKey: string
-  ): Promise<PackageInstallRequest> {
-    const subscriberPackageVersion = new SubscriberPackageVersion({
-      connection,
-      aliasOrId: packageToInstall?.SubscriberPackageVersionId,
-      password: installationKey,
-    });
-
-    const request: PackageInstallCreateRequest = {
-      // eslint-disable-next-line no-await-in-loop
-      SubscriberPackageVersionKey: await subscriberPackageVersion.getId(),
-      Password: installationKey as PackageInstallCreateRequest['Password'],
-      ApexCompileType: this.flags.apexcompile as PackageInstallCreateRequest['ApexCompileType'],
-      SecurityType: securityType[this.flags.securitytype as string] as PackageInstallCreateRequest['SecurityType'],
-      UpgradeType: upgradeType[this.flags.upgradetype as string] as PackageInstallCreateRequest['UpgradeType'],
-    };
-
-    const installOptions = {
-      publishTimeout: this.flags.publishwait as Duration,
-      pollingTimeout: this.flags.wait as Duration,
-    };
-    let remainingTime = this.flags.wait as Duration;
-    let timeThen = Date.now();
-
-    // waiting for publish to finish
-    Lifecycle.getInstance().on(
-      PackageEvents.install['subscriber-status'],
-      // eslint-disable-next-line @typescript-eslint/require-await
-      async () => {
-        const elapsedTime = Duration.milliseconds(Date.now() - timeThen);
-        timeThen = Date.now();
-        remainingTime = Duration.milliseconds(remainingTime.milliseconds - elapsedTime.milliseconds);
-      }
-    );
-
-    // waiting for package install to finish
-    Lifecycle.getInstance().on(
-      PackageEvents.install.status,
-      // eslint-disable-next-line @typescript-eslint/require-await
-      async () => {
-        const elapsedTime = Duration.milliseconds(Date.now() - timeThen);
-        timeThen = Date.now();
-        remainingTime = Duration.milliseconds(remainingTime.milliseconds - elapsedTime.milliseconds);
-      }
-    );
-
-    return subscriberPackageVersion.install(request, installOptions);
+    return packageInstallRequests;
   }
 }
