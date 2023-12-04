@@ -5,37 +5,163 @@
  * For full license text, see LICENSE.md file in the repo root or https://opensource.org/licenses/MIT
  */
 
-import { TestContext } from '@salesforce/core/lib/testSetup';
-import { PackagingSObjects, SubscriberPackageVersion } from '@salesforce/packaging';
-import { stubSfCommandUx } from '@salesforce/sf-plugins-core';
+import { MockTestOrgData, TestContext } from '@salesforce/core/lib/testSetup';
+import { Package, PackageSaveResult, PackageVersion, PackageVersionListResult } from '@salesforce/packaging';
 import { expect } from 'chai';
-import { stubMethod } from '@salesforce/ts-sinon';
 import PackageVersionCleanup from '../../../../../src/commands/chipps/package/version/cleanup';
 
 const myPackage0Hot = '0Hot0000000YzlxBAB';
-const myPackageVersion04t = '04t6A000002zgKSQAY';
+const packageVersion0101SubscriberId = '04t6A000002zgKSQAW';
+const packageVersion0102SubscriberId = '04t6A000002zgKSQAX';
+const packageVersion0201SubscriberId = '04t6A000002zgKSQAY';
+const packageVersion0202SubscriberId = '04t6A000002zgKSQAZ';
 
-const subscriberPackageVersion: PackagingSObjects.SubscriberPackageVersion = {
+const packageVersion0101ListResult: PackageVersionListResult = {
+  Id: '',
+  Package2Id: '',
+  SubscriberPackageVersionId: packageVersion0101SubscriberId,
+  Name: '',
+  // @ts-ignore
+  Package2: undefined,
+  Description: '',
+  Tag: '',
+  Branch: '',
+  MajorVersion: '0',
+  MinorVersion: '1',
+  PatchVersion: '0',
+  BuildNumber: '1',
+  IsReleased: false,
+  CreatedDate: '1900-01-01',
+  LastModifiedDate: '1900-01-01',
+  IsPasswordProtected: false,
+  AncestorId: '',
+  ValidationSkipped: false,
+  CreatedById: '',
+  // @ts-ignore
+  CodeCoverage: undefined,
+  HasPassedCodeCoverageCheck: true,
+  ConvertedFromVersionId: '',
+  ReleaseVersion: '',
+  BuildDurationInSeconds: 60,
+  HasMetadataRemoved: false,
+  Language: '',
+};
+
+const packageVersion0102ListResult: PackageVersionListResult = {
+  Id: '',
+  Package2Id: '',
+  SubscriberPackageVersionId: packageVersion0102SubscriberId,
+  Name: '',
+  // @ts-ignore
+  Package2: undefined,
+  Description: '',
+  Tag: '',
+  Branch: '',
+  MajorVersion: '0',
+  MinorVersion: '1',
+  PatchVersion: '0',
+  BuildNumber: '2',
+  IsReleased: true,
+  CreatedDate: '1900-01-01',
+  LastModifiedDate: '1900-01-01',
+  IsPasswordProtected: false,
+  AncestorId: '',
+  ValidationSkipped: false,
+  CreatedById: '',
+  // @ts-ignore
+  CodeCoverage: undefined,
+  HasPassedCodeCoverageCheck: true,
+  ConvertedFromVersionId: '',
+  ReleaseVersion: '',
+  BuildDurationInSeconds: 60,
+  HasMetadataRemoved: false,
+  Language: '',
+};
+
+const packageVersion0201ListResult: PackageVersionListResult = {
+  Id: '',
+  Package2Id: '',
+  SubscriberPackageVersionId: packageVersion0201SubscriberId,
+  Name: '',
+  // @ts-ignore
+  Package2: undefined,
+  Description: '',
+  Tag: '',
+  Branch: '',
+  MajorVersion: '0',
+  MinorVersion: '2',
+  PatchVersion: '0',
+  BuildNumber: '1',
+  IsReleased: false,
+  CreatedDate: '1900-01-01',
+  LastModifiedDate: '1900-01-01',
+  IsPasswordProtected: false,
+  AncestorId: '',
+  ValidationSkipped: false,
+  CreatedById: '',
+  // @ts-ignore
+  CodeCoverage: undefined,
+  HasPassedCodeCoverageCheck: true,
+  ConvertedFromVersionId: '',
+  ReleaseVersion: '',
+  BuildDurationInSeconds: 60,
+  HasMetadataRemoved: false,
+  Language: '',
+};
+
+const packageVersion0202ListResult: PackageVersionListResult = {
+  Id: '',
+  Package2Id: '',
+  SubscriberPackageVersionId: packageVersion0202SubscriberId,
+  Name: '',
+  // @ts-ignore
+  Package2: undefined,
+  Description: '',
+  Tag: '',
+  Branch: '',
+  MajorVersion: '0',
+  MinorVersion: '2',
+  PatchVersion: '0',
+  BuildNumber: '2',
+  IsReleased: true,
+  CreatedDate: '1900-01-01',
+  LastModifiedDate: '1900-01-01',
+  IsPasswordProtected: false,
+  AncestorId: '',
+  ValidationSkipped: false,
+  CreatedById: '',
+  // @ts-ignore
+  CodeCoverage: undefined,
+  HasPassedCodeCoverageCheck: true,
+  ConvertedFromVersionId: '',
+  ReleaseVersion: '',
+  BuildDurationInSeconds: 60,
+  HasMetadataRemoved: false,
+  Language: '',
+};
+
+/*
+const packageVersion0101SubscriberPackageVersion: PackagingSObjects.SubscriberPackageVersion = {
   AppExchangeDescription: '',
   AppExchangeLogoUrl: '',
   AppExchangePackageName: '',
   AppExchangePublisherName: '',
-  BuildNumber: 0,
+  BuildNumber: 1,
   // @ts-ignore
   CspTrustedSites: undefined,
   // @ts-ignore
   Dependencies: undefined,
   Description: '',
-  Id: myPackageVersion04t,
+  Id: packageVersion0101SubscriberId,
   InstallValidationStatus: 'NO_ERRORS_DETECTED',
-  IsBeta: false,
+  IsBeta: true,
   IsDeprecated: false,
   IsManaged: false,
   IsOrgDependent: false,
   IsPasswordProtected: false,
   IsSecurityReviewed: false,
   MajorVersion: 0,
-  MinorVersion: 0,
+  MinorVersion: 1,
   Name: '',
   // @ts-ignore
   Package2ContainerOptions: undefined,
@@ -51,12 +177,137 @@ const subscriberPackageVersion: PackagingSObjects.SubscriberPackageVersion = {
   SubscriberPackageId: '',
 };
 
+const subscriberPackageVersion0102: PackagingSObjects.SubscriberPackageVersion = {
+  AppExchangeDescription: '',
+  AppExchangeLogoUrl: '',
+  AppExchangePackageName: '',
+  AppExchangePublisherName: '',
+  BuildNumber: 2,
+  // @ts-ignore
+  CspTrustedSites: undefined,
+  // @ts-ignore
+  Dependencies: undefined,
+  Description: '',
+  Id: packageVersion0102SubscriberId,
+  InstallValidationStatus: 'NO_ERRORS_DETECTED',
+  IsBeta: false,
+  IsDeprecated: false,
+  IsManaged: false,
+  IsOrgDependent: false,
+  IsPasswordProtected: false,
+  IsSecurityReviewed: false,
+  MajorVersion: 0,
+  MinorVersion: 1,
+  Name: '',
+  // @ts-ignore
+  Package2ContainerOptions: undefined,
+  PatchVersion: 0,
+  PostInstallUrl: '',
+  // @ts-ignore
+  Profiles: undefined,
+  PublisherName: '',
+  ReleaseNotesUrl: '',
+  ReleaseState: '',
+  // @ts-ignore
+  RemoteSiteSettings: undefined,
+  SubscriberPackageId: '',
+};
+
+const subscriberPackageVersion0201: PackagingSObjects.SubscriberPackageVersion = {
+  AppExchangeDescription: '',
+  AppExchangeLogoUrl: '',
+  AppExchangePackageName: '',
+  AppExchangePublisherName: '',
+  BuildNumber: 1,
+  // @ts-ignore
+  CspTrustedSites: undefined,
+  // @ts-ignore
+  Dependencies: undefined,
+  Description: '',
+  Id: packageVersion0201SubscriberId,
+  InstallValidationStatus: 'NO_ERRORS_DETECTED',
+  IsBeta: true,
+  IsDeprecated: false,
+  IsManaged: false,
+  IsOrgDependent: false,
+  IsPasswordProtected: false,
+  IsSecurityReviewed: false,
+  MajorVersion: 0,
+  MinorVersion: 2,
+  Name: '',
+  // @ts-ignore
+  Package2ContainerOptions: undefined,
+  PatchVersion: 0,
+  PostInstallUrl: '',
+  // @ts-ignore
+  Profiles: undefined,
+  PublisherName: '',
+  ReleaseNotesUrl: '',
+  ReleaseState: '',
+  // @ts-ignore
+  RemoteSiteSettings: undefined,
+  SubscriberPackageId: '',
+};
+
+const subscriberPackageVersion0202: PackagingSObjects.SubscriberPackageVersion = {
+  AppExchangeDescription: '',
+  AppExchangeLogoUrl: '',
+  AppExchangePackageName: '',
+  AppExchangePublisherName: '',
+  BuildNumber: 2,
+  // @ts-ignore
+  CspTrustedSites: undefined,
+  // @ts-ignore
+  Dependencies: undefined,
+  Description: '',
+  Id: packageVersion0202SubscriberId,
+  InstallValidationStatus: 'NO_ERRORS_DETECTED',
+  IsBeta: false,
+  IsDeprecated: false,
+  IsManaged: false,
+  IsOrgDependent: false,
+  IsPasswordProtected: false,
+  IsSecurityReviewed: false,
+  MajorVersion: 0,
+  MinorVersion: 2,
+  Name: '',
+  // @ts-ignore
+  Package2ContainerOptions: undefined,
+  PatchVersion: 0,
+  PostInstallUrl: '',
+  // @ts-ignore
+  Profiles: undefined,
+  PublisherName: '',
+  ReleaseNotesUrl: '',
+  ReleaseState: '',
+  // @ts-ignore
+  RemoteSiteSettings: undefined,
+  SubscriberPackageId: '',
+};
+*/
+
 describe('chipps package version cleanup', () => {
   const $$ = new TestContext();
-  let sfCommandStubs: ReturnType<typeof stubSfCommandUx>;
+  const testOrg = new MockTestOrgData();
+  const listVersionsStub = $$.SANDBOX.stub(Package, 'listVersions');
 
-  beforeEach(() => {
-    sfCommandStubs = stubSfCommandUx($$.SANDBOX);
+  // stubs
+  let deleteStub: sinon.SinonStub;
+  let packageVersionStub: sinon.SinonStub;
+
+  beforeEach(async () => {
+    deleteStub = $$.SANDBOX.stub();
+
+    // The PackageVersion class is tested in the packaging library, so
+    // we just stub the public APIs used by the command.
+    packageVersionStub = $$.SANDBOX.stub().callsFake(() => ({
+      delete: deleteStub,
+    }));
+    Object.setPrototypeOf(PackageVersion, packageVersionStub);
+  });
+
+  before(async () => {
+    await $$.stubAuths(testOrg);
   });
 
   afterEach(() => {
@@ -93,19 +344,31 @@ describe('chipps package version cleanup', () => {
     }
   });
 
-  it('should print IN_PROGRESS status correctly', async () => {
-    let installStub = stubMethod($$.SANDBOX, SubscriberPackageVersion.prototype, 'install').resolves(pkgInstallRequest);
-    stubMethod($$.SANDBOX, Connection.prototype, 'singleRecordQuery').resolves(subscriberPackageVersion);
+  it('should select the correct versions for deletion', async () => {
+    listVersionsStub.resolves([
+      packageVersion0101ListResult,
+      packageVersion0102ListResult,
+      packageVersion0201ListResult,
+      packageVersion0202ListResult,
+    ]);
 
-    const cmd = new Install(['-p', myPackageVersion04t, '-o', testOrg.username], config);
-    stubSpinner(cmd);
-    const result = await cmd.run();
+    deleteStub.reset();
+    deleteStub = $$.SANDBOX.stub(PackageVersion.prototype, 'delete').resolves({
+      errors: [],
+      id: 'testId',
+      success: true,
+    } as PackageSaveResult);
 
-    expect(uxLogStub.calledOnce).to.be.true;
-    const msg = `PackageInstallRequest is currently InProgress. You can continue to query the status using${EOL}sf package:install:report -i 0Hf1h0000006sh2CAA -o ${testOrg.username}`;
-    expect(uxLogStub.args[0][0]).to.deep.equal(msg);
-    expect(result).to.deep.equal(pkgInstallRequest);
-    expect(installStub.args[0][0]).to.deep.equal(pkgInstallCreateRequest);
+    const results = await PackageVersionCleanup.run([
+      '--matcher',
+      '2.0.2',
+      '--package',
+      myPackage0Hot,
+      '--target-devhub',
+      'foor@bar.org',
+    ]);
+
+    expect(results).to.include('foo');
   });
 
   /* it('runs chipps package version cleanup ', async () => {

@@ -1,7 +1,5 @@
 {
-  "check-coverage": true,
-  "lines": 0,
-  "statements": 0,
-  "functions": 0,
-  "branches": 0
+  "nyc": {
+    "extends": "@salesforce/dev-config/nyc"
+  }
 }
