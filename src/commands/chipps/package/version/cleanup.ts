@@ -6,7 +6,7 @@
  */
 
 import { SfCommand, Flags } from '@salesforce/sf-plugins-core';
-import { AuthInfo, Connection, Messages, Logger } from '@salesforce/core';
+import { Messages, Logger } from '@salesforce/core';
 import {
   Package,
   PackageSaveResult,
@@ -28,8 +28,12 @@ export default class PackageVersionCleanup extends SfCommand<PackageVersionClean
   public static readonly summary = messages.getMessage('summary');
   public static readonly description = messages.getMessage('description');
   public static readonly examples = messages.getMessages('examples');
+  // This is annoying, but the underlying Salesforce Packaging API expects you to be in a project context
+  // https://github.com/forcedotcom/packaging/blob/main/src/package/package.ts#L146C55-L146C55
+  public static readonly requiresProject = true;
 
   public static readonly flags = {
+    'api-version': Flags.orgApiVersion(),
     matcher: Flags.string({
       summary: messages.getMessage('flags.matcher.summary'),
       description: messages.getMessage('flags.matcher.description'),
@@ -42,11 +46,7 @@ export default class PackageVersionCleanup extends SfCommand<PackageVersionClean
       char: 'p',
       required: true,
     }),
-    'target-dev-hub': Flags.string({
-      summary: messages.getMessage('flags.target-dev-hub.summary'),
-      char: 'n',
-      required: true,
-    }),
+    'target-dev-hub': Flags.requiredHub(),
   };
 
   public async run(): Promise<PackageVersionCleanupResult[]> {
@@ -54,16 +54,16 @@ export default class PackageVersionCleanup extends SfCommand<PackageVersionClean
 
     const { flags } = await this.parse(PackageVersionCleanup);
 
-    // Initialize the authorization for the target dev hub
-    const targetDevHubAuthInfo = await AuthInfo.create({ username: flags['target-dev-hub'] });
-
     // Create a connection to the org
-    const connection = await Connection.create({ authInfo: targetDevHubAuthInfo });
+    const connection = flags['target-dev-hub']?.getConnection(flags['api-version']);
+
+    if (!connection) {
+      throw messages.createError('errors.connectionFailed');
+    }
 
     const project = this.project;
 
     const matcher = flags.matcher;
-
     const matcherRegex = new RegExp(/^\d+\.\d+\.\d+$/);
     const matcherValid = matcherRegex.test(matcher);
 
@@ -87,6 +87,8 @@ export default class PackageVersionCleanup extends SfCommand<PackageVersionClean
       isReleased: false,
       verbose: true,
     };
+
+    this.spinner.start('Analyzing which package versions to delete...');
 
     const packageVersions = await Package.listVersions(connection, project, packageVersionListOptions);
 
@@ -112,6 +114,8 @@ export default class PackageVersionCleanup extends SfCommand<PackageVersionClean
 
     const results: PackageVersionCleanupResult[] = [];
 
+    this.spinner.start('Deleting the package versions...');
+
     const promiseResults = await Promise.allSettled(packageVersionDeletePromiseRequests);
 
     promiseResults.forEach((promiseResult, index) => {
@@ -131,6 +135,8 @@ export default class PackageVersionCleanup extends SfCommand<PackageVersionClean
           break;
       }
     });
+
+    this.spinner.stop();
 
     this.displayDeletionResults(results);
 
