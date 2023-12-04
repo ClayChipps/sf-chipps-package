@@ -1,8 +1,10 @@
 {
-  "extends": "@salesforce/dev-config/tsconfig-test-strict",
+  "extends": "@salesforce/dev-config/tsconfig-test-strict-esm",
   "include": ["./**/*.ts"],
   "compilerOptions": {
     "skipLibCheck": true,
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "baseUrl": "../",
+    "sourceMap": true
   }
 }

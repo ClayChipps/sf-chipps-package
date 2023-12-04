@@ -5,4 +5,4 @@
  * For full license text, see LICENSE.md file in the repo root or https://opensource.org/licenses/MIT
  */
 
-export = {};
+export default {};

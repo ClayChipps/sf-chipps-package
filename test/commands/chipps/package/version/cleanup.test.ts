@@ -5,10 +5,10 @@
  * For full license text, see LICENSE.md file in the repo root or https://opensource.org/licenses/MIT
  */
 
-import { MockTestOrgData, TestContext } from '@salesforce/core/lib/testSetup';
+import { MockTestOrgData, TestContext } from '@salesforce/core/lib/testSetup.js';
 import { Package, PackageSaveResult, PackageVersion, PackageVersionListResult } from '@salesforce/packaging';
 import { expect } from 'chai';
-import PackageVersionCleanup from '../../../../../src/commands/chipps/package/version/cleanup';
+import PackageVersionCleanup from '../../../../../src/commands/chipps/package/version/cleanup.js';
 
 const myPackage0Hot = '0Hot0000000YzlxBAB';
 const packageVersion0101SubscriberId = '04t6A000002zgKSQAW';
