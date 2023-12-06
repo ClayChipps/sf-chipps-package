@@ -1,7 +1,7 @@
 {
   "name": "sf-chipps-package",
   "description": "Utilities for working with packages",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "author": "@ClayChipps",
   "bugs": "https://github.com/ClayChipps/sf-chipps-package/issues",
   "dependencies": {
