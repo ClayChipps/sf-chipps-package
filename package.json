@@ -15,7 +15,7 @@
     "@oclif/plugin-command-snapshot": "^5.0.2",
     "@salesforce/cli-plugins-testkit": "^5.1.2",
     "@salesforce/dev-scripts": "^7.1.1",
-    "@salesforce/plugin-command-reference": "^3.0.49",
+    "@salesforce/plugin-command-reference": "^3.0.51",
     "@salesforce/ts-sinon": "1.4.19",
     "@types/shelljs": "^0.8.14",
     "eslint-plugin-sf-plugin": "^1.16.15",
@@ -24,7 +24,7 @@
     "shelljs": "^0.8.5",
     "shx": "0.3.4",
     "ts-node": "^10.9.2",
-    "typescript": "^5.2.2"
+    "typescript": "^5.3.3"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -50,7 +50,9 @@
     "commands": "./lib/commands",
     "bin": "sf",
     "devPlugins": [
-      "@oclif/plugin-help"
+      "@oclif/plugin-command-snapshot",
+      "@oclif/plugin-help",
+      "@salesforce/plugin-command-reference"
     ],
     "topics": {
       "chipps": {
@@ -141,11 +143,14 @@
       "dependencies": [
         "test:compile",
         "test:only",
-        "lint"
+        "test:command-reference",
+        "test:deprecation-policy",
+        "lint",
+        "test:json-schema"
       ]
     },
     "test:command-reference": {
-      "command": "ts-node \"./bin/dev.js\" commandreference:generate --erroronwarnings",
+      "command": "node --loader ts-node/esm --no-warnings=ExperimentalWarning \"./bin/dev.js\" commandreference:generate --erroronwarnings",
       "files": [
         "src/**/*.ts",
         "messages/**",
@@ -156,7 +161,7 @@
       ]
     },
     "test:deprecation-policy": {
-      "command": "ts-node \"./bin/dev.js\" snapshot:compare",
+      "command": "node --loader ts-node/esm --no-warnings=ExperimentalWarning \"./bin/dev.js\" snapshot:compare",
       "files": [
         "src/**/*.ts"
       ],
@@ -166,7 +171,7 @@
       ]
     },
     "test:json-schema": {
-      "command": "ts-node \"./bin/dev.js\" schema:compare",
+      "command": "node --loader ts-node/esm --no-warnings=ExperimentalWarning \"./bin/dev.js\" schema:compare",
       "files": [
         "src/**/*.ts",
         "schemas"
