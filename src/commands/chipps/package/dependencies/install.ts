@@ -49,6 +49,7 @@ export default class PackageDependenciesInstall extends SfCommand<PackageInstall
   public static readonly summary = messages.getMessage('summary');
   public static readonly description = messages.getMessage('description');
   public static readonly examples = messages.getMessages('examples');
+  public static readonly requiresProject = true;
 
   public static readonly flags = {
     'apex-compile': Flags.custom<PackageInstallCreateRequest['ApexCompileType']>({
@@ -58,6 +59,7 @@ export default class PackageDependenciesInstall extends SfCommand<PackageInstall
       description: messages.getMessage('flags.apex-compile.description'),
       char: 'a',
     }),
+    'api-version': Flags.orgApiVersion(),
     branch: Flags.string({
       summary: messages.getMessage('flags.branch.summary'),
       description: messages.getMessage('flags.branch.description'),
@@ -110,11 +112,7 @@ export default class PackageDependenciesInstall extends SfCommand<PackageInstall
       summary: messages.getMessage('flags.target-dev-hub.summary'),
       char: 'v',
     }),
-    'target-org': Flags.string({
-      summary: messages.getMessage('flags.target-org.summary'),
-      char: 'n',
-      required: true,
-    }),
+    'target-org': Flags.requiredOrg(),
     'upgrade-type': Flags.custom<'DeprecateOnly' | 'Mixed' | 'Delete'>({
       options: ['DeprecateOnly', 'Mixed', 'Delete'],
     })({
@@ -137,8 +135,11 @@ export default class PackageDependenciesInstall extends SfCommand<PackageInstall
     const { flags } = await this.parse(PackageDependenciesInstall);
 
     // Authorize to the target org
-    const targetOrgAuthInfo = await AuthInfo.create({ username: flags['target-org'] });
-    const targetOrgConnection = await Connection.create({ authInfo: targetOrgAuthInfo });
+    const targetOrgConnection = flags['target-org']?.getConnection(flags['api-version']);
+
+    if (!targetOrgConnection) {
+      throw messages.createError('errors.targetOrgConnectionFailed');
+    }
 
     // Validate minimum api version
     const apiVersion = parseInt(targetOrgConnection.getApiVersion(), 10);
@@ -153,10 +154,7 @@ export default class PackageDependenciesInstall extends SfCommand<PackageInstall
     const packageInstallRequests: PackageInstallRequest[] = [];
     const dependenciesForDevHubResolution: PackageDirDependency[] = [];
 
-    let packageAliases;
-    if (await project.hasPackageAliases()) {
-      packageAliases = project.getPackageAliases();
-    }
+    const packageAliases = project.getPackageAliases();
     const packageDirectories = project.getPackageDirectories();
 
     this.spinner.start('Analyzing project to determine packages to install...');
@@ -196,14 +194,18 @@ export default class PackageDependenciesInstall extends SfCommand<PackageInstall
     if (dependenciesForDevHubResolution.length > 0) {
       this.spinner.start('Resolving package versions from dev hub...');
 
+      if (!flags['target-dev-hub']) {
+        throw messages.createError('error.devHubMissing');
+      }
+
       // Initialize the authorization for the provided dev hub
       const targetDevHubAuthInfo = await AuthInfo.create({ username: flags['target-dev-hub'] });
 
       // Create a connection to the dev hub
-      const devHubConnection = await Connection.create({ authInfo: targetDevHubAuthInfo });
+      const targetDevHubConnection = await Connection.create({ authInfo: targetDevHubAuthInfo });
 
-      if (!devHubConnection) {
-        throw messages.createError('error.devHubMissing');
+      if (!targetDevHubConnection) {
+        throw messages.createError('errors.targetDevHubConnectionFailed');
       }
 
       for (const dependencyForDevHubResolution of dependenciesForDevHubResolution) {
@@ -222,7 +224,7 @@ export default class PackageDependenciesInstall extends SfCommand<PackageInstall
           packageVersionId = packageAliases?.[packageVersionId] as string;
         }
 
-        packageVersionId = await resolvePackageVersionId(pakage, versionNumber, flags.branch, devHubConnection);
+        packageVersionId = await resolvePackageVersionId(pakage, versionNumber, flags.branch, targetDevHubConnection);
       }
     }
 

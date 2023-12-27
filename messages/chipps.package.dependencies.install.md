@@ -70,10 +70,6 @@ Allows the installer of a package to optionally skip install handlers in order t
 
 Username or alias of the Dev Hub org.
 
-# flags.target-org.summary
-
-Username or alias of the Target org.
-
 # flags.upgrade-type.summary
 
 Upgrade type for the package installation; available only for unlocked packages.
@@ -119,6 +115,14 @@ Encountered errors installing the package! %s
 # error.packageInstallPollingTimeout
 
 Polling timeout exceeded
+
+# errors.targetDevHubConnectionFailed
+
+Unable to establish connection to the org.
+
+# errors.targetOrgConnectionFailed
+
+Unable to establish connection to the org.
 
 # info.canceledPackageInstall
 
