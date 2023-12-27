@@ -138,7 +138,7 @@ export default class PackageDependenciesInstall extends SfCommand<PackageInstall
     const targetOrgConnection = flags['target-org']?.getConnection(flags['api-version']);
 
     if (!targetOrgConnection) {
-      throw messages.createError('errors.targetOrgConnectionFailed');
+      throw messages.createError('error.targetOrgConnectionFailed');
     }
 
     // Validate minimum api version
@@ -205,7 +205,7 @@ export default class PackageDependenciesInstall extends SfCommand<PackageInstall
       const targetDevHubConnection = await Connection.create({ authInfo: targetDevHubAuthInfo });
 
       if (!targetDevHubConnection) {
-        throw messages.createError('errors.targetDevHubConnectionFailed');
+        throw messages.createError('error.targetDevHubConnectionFailed');
       }
 
       for (const dependencyForDevHubResolution of dependenciesForDevHubResolution) {

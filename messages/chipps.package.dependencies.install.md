@@ -116,11 +116,11 @@ Encountered errors installing the package! %s
 
 Polling timeout exceeded
 
-# errors.targetDevHubConnectionFailed
+# error.targetDevHubConnectionFailed
 
 Unable to establish connection to the org.
 
-# errors.targetOrgConnectionFailed
+# error.targetOrgConnectionFailed
 
 Unable to establish connection to the org.
 
