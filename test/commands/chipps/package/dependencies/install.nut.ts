@@ -20,7 +20,7 @@ describe('chipps package dependencies install', () => {
     session = await TestSession.create({
       devhubAuthStrategy: 'AUTO',
       project: {
-        gitClone: 'https://github.com/trailheadapps/easy-spaces-lwc.git',
+        gitClone: 'https://github.com/ClayChipps/easy-spaces-lwc',
       },
       scratchOrgs: [
         {
