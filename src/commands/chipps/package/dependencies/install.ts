@@ -45,7 +45,7 @@ const upgradeType = { Delete: 'delete-only', DeprecateOnly: 'deprecate-only', Mi
 
 const installationKeyRegex = new RegExp(/^(\w+:\w+)(,\s*\w+:\w+)*/);
 
-export default class ChippsPackageDependenciesInstall extends SfCommand<PackageInstallRequest[]> {
+export default class PackageDependenciesInstall extends SfCommand<PackageInstallRequest[]> {
   public static readonly summary = messages.getMessage('summary');
   public static readonly description = messages.getMessage('description');
   public static readonly examples = messages.getMessages('examples');
@@ -134,7 +134,7 @@ export default class ChippsPackageDependenciesInstall extends SfCommand<PackageI
   private subscriberPackageVersion!: SubscriberPackageVersion;
 
   public async run(): Promise<PackageInstallRequest[]> {
-    const { flags } = await this.parse(ChippsPackageDependenciesInstall);
+    const { flags } = await this.parse(PackageDependenciesInstall);
 
     // Authorize to the target org
     const targetOrgAuthInfo = await AuthInfo.create({ username: flags['target-org'] });
@@ -153,7 +153,10 @@ export default class ChippsPackageDependenciesInstall extends SfCommand<PackageI
     const packageInstallRequests: PackageInstallRequest[] = [];
     const dependenciesForDevHubResolution: PackageDirDependency[] = [];
 
-    const packageAliases = project.getPackageAliases();
+    let packageAliases;
+    if (await project.hasPackageAliases()) {
+      packageAliases = project.getPackageAliases();
+    }
     const packageDirectories = project.getPackageDirectories();
 
     this.spinner.start('Analyzing project to determine packages to install...');
