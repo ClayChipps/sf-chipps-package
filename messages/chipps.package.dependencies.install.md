@@ -112,6 +112,10 @@ No SubscriberPackageVersionId could be inferred from the dependencies.
 
 Encountered errors installing the package! %s
 
+# error.packageInstallInProgress
+
+The package install is still In-Progress, so subsuequent dependencies cannot be installed yet. You can query the status using %s package install report -i %s -o %s.
+
 # error.packageInstallPollingTimeout
 
 Polling timeout exceeded
@@ -135,11 +139,6 @@ Successfully installed package [%s]
 # info.availableForInstallation
 
 Available for installation
-
-# info.packageInstallInProgress
-
-PackageInstallRequest is currently InProgress. You can continue to query the status using
-%s package:install:report -i %s -o %s
 
 # info.packageInstallWaiting
 

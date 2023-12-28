@@ -6,17 +6,15 @@
  */
 
 import path from 'node:path';
-import { execCmd, TestSession } from '@salesforce/cli-plugins-testkit';
-import { ensureString } from '@salesforce/ts-types';
 import { expect } from 'chai';
-import { Duration, Env } from '@salesforce/kit';
+import { execCmd, TestSession } from '@salesforce/cli-plugins-testkit';
+import { Duration } from '@salesforce/kit';
+import { PackageToInstall } from './../../../../../src/commands/chipps/package/dependencies/install.js';
 
 describe('chipps package dependencies install', () => {
   let session: TestSession;
-  let devHub: string;
 
   before(async () => {
-    devHub = ensureString(new Env().getString('TESTKIT_HUB_USERNAME'));
     session = await TestSession.create({
       devhubAuthStrategy: 'AUTO',
       project: {
@@ -35,11 +33,57 @@ describe('chipps package dependencies install', () => {
     await session?.clean();
   });
 
-  it('should install package dependencies with polling', () => {
+  it('should install package dependencies with stdout', () => {
     const username = [...session.orgs.keys()][0];
-    const command = `chipps package dependencies install --target-dev-hub ${devHub} --target-org ${username} --no-prompt --wait 20`;
-    const output = execCmd(command, { ensureExitCode: 0, timeout: Duration.minutes(20).milliseconds }).shellOutput
-      .stdout;
-    expect(output).to.contain('Successfully installed package');
+    const command = `chipps package dependencies install --install-type All --target-org ${username} --no-prompt`;
+    const output = execCmd(command, { ensureExitCode: 0, timeout: Duration.minutes(30).milliseconds });
+    const stdout = output?.shellOutput?.stdout;
+
+    expect(stdout).to.contain('Installing package ESObjects@57.0.0-3... done');
+    expect(stdout).to.contain('Installing package ESBaseCodeLWC@57.0.0-2... done');
+    expect(stdout).to.contain('Installing package ESBaseStylesLWC@57.0.0-2... done');
+  });
+
+  it('should install package dependencies with json', () => {
+    const username = [...session.orgs.keys()][0];
+    const command = `chipps package dependencies install --install-type All --target-org ${username} --no-prompt`;
+    const output = execCmd<PackageToInstall[]>(command, {
+      ensureExitCode: 0,
+      timeout: Duration.minutes(30).milliseconds,
+    }).jsonOutput;
+
+    expect(output!.result[0].PackageName).contains('ESObjects');
+    expect(output!.result[1].PackageName).contains('ESBaseCodeLWC');
+    expect(output!.result[2].PackageName).contains('ESBaseStylesLWC');
+  });
+
+  it('should skip installed packages with stdout', () => {
+    const username = [...session.orgs.keys()][0];
+    const command = `chipps package dependencies install --install-type Delta --target-org ${username} --no-prompt`;
+    const output = execCmd(command, { ensureExitCode: 0, timeout: Duration.minutes(30).milliseconds });
+    const stdout = output?.shellOutput?.stdout;
+
+    expect(stdout).to.contain(
+      'Package ESObjects@57.0.0-3 (04t4W000002nizdQAA) is already installed and will be skipped'
+    );
+    expect(stdout).to.contain(
+      'Package ESBaseCodeLWC@57.0.0-2 (04t4W000002niziQAA) is already installed and will be skipped'
+    );
+    expect(stdout).to.contain(
+      'Package ESBaseStylesLWC@57.0.0-2 (04t4W000002niznQAA) is already installed and will be skipped'
+    );
+  });
+
+  it('should skip installed packages with json', () => {
+    const username = [...session.orgs.keys()][0];
+    const command = `chipps package dependencies install --install-type Delta --target-org ${username} --no-prompt`;
+    const output = execCmd<PackageToInstall[]>(command, {
+      ensureExitCode: 0,
+      timeout: Duration.minutes(30).milliseconds,
+    }).jsonOutput;
+
+    expect(output!.result[0].Status).equals('Skipped');
+    expect(output!.result[1].Status).equals('Skipped');
+    expect(output!.result[2].Status).equals('Skipped');
   });
 });
