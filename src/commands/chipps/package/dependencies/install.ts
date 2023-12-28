@@ -333,6 +333,8 @@ export default class PackageDependenciesInstall extends SfCommand<PackageToInsta
           this.warn(warningMsg);
         });
 
+        this.spinner.stop();
+
         if (flags['publish-wait']?.milliseconds > 0) {
           let timeThen = Date.now();
           // waiting for publish to finish
