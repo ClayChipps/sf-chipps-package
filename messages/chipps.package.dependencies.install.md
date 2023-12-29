@@ -106,7 +106,7 @@ You can use an alias in place of the SubscriberPackageVersionId.
 
 # error.noSubscriberPackageVersionId
 
-Unable to determine the SubscriberPackageVersionId from the the dependencies.
+Unable to determine the SubscriberPackageVersionId from the dependencies.
 
 # error.packageInstall
 
