@@ -221,14 +221,19 @@ export default class PackageDependenciesInstall extends SfCommand<PackageToInsta
         }
 
         // Assume the package is not an alias
-        let packageVersionId = pakage;
+        let packageId = pakage;
 
         // If we found the alias, then use that value as the packageVersionId
-        if (packageAliases?.[packageVersionId]) {
-          packageVersionId = packageAliases?.[packageVersionId] as string;
+        if (packageAliases?.[packageId]) {
+          packageId = packageAliases?.[packageId] as string;
         }
 
-        packageVersionId = await resolvePackageVersionId(pakage, versionNumber, flags.branch, targetDevHubConnection);
+        const packageVersionId = await resolvePackageVersionId(
+          packageId,
+          versionNumber,
+          flags.branch,
+          targetDevHubConnection
+        );
 
         packagesToInstall.push({
           PackageName: pakage,

@@ -13,11 +13,13 @@ type PackageInstallRequest = PackagingSObjects.PackageInstallRequest;
 export const PACKAGE_ID_PREFIX = '0Ho';
 export const PACKAGE_VERSION_ID_PREFIX = '04t';
 
-export const isPackageId = (inputToEvaluate: string): boolean =>
-  inputToEvaluate ? inputToEvaluate.startsWith(PACKAGE_ID_PREFIX) : false;
+export const isPackageId = (inputToEvaluate: string): boolean => {
+  return inputToEvaluate ? inputToEvaluate.startsWith(PACKAGE_ID_PREFIX) : false;
+};
 
-export const isPackageVersionId = (inputToEvaluate: string): boolean =>
-  inputToEvaluate ? inputToEvaluate.startsWith(PACKAGE_VERSION_ID_PREFIX) : false;
+export const isPackageVersionId = (inputToEvaluate: string): boolean => {
+  return inputToEvaluate ? inputToEvaluate.startsWith(PACKAGE_VERSION_ID_PREFIX) : false;
+};
 
 export const isPackageVersionInstalled = (
   installedPackages: InstalledPackages[],
@@ -44,16 +46,16 @@ export const reducePackageInstallRequestErrors = (request: PackageInstallRequest
 };
 
 export const resolvePackageVersionId = async (
-  packageName: string,
+  packageId: string,
   versionNumber: string,
   branch: string,
   connection: Connection
 ): Promise<string> => {
-  if (isPackageVersionId(packageName)) {
-    return packageName;
+  if (isPackageVersionId(packageId)) {
+    return packageId;
   }
 
-  if (!isPackageId(packageName)) {
+  if (!isPackageId(packageId)) {
     throw new SfError('The Package2Id provided is not a valid Package2Id');
   }
 
@@ -64,30 +66,30 @@ export const resolvePackageVersionId = async (
   const versionParts = versionWorking.split('.');
 
   // Assemble the query needed
-  let query = 'Select SubscriberPackageVersionId, IsPasswordProtected, IsReleased ';
-  query += 'from Package2Version ';
-  query += `where Package2Id='${packageName}' and MajorVersion=${versionParts[0]} and IsDeprecated = false   `;
+  let query = 'SELECT SubscriberPackageVersionId, IsPasswordProtected, IsReleased ';
+  query += 'FROM Package2Version ';
+  query += `WHERE Package2Id='${packageId}' AND MajorVersion=${versionParts[0]} AND IsDeprecated = FALSE `;
 
   // If Minor Version isn't set to LATEST, look for the exact Minor Version
   if (versionParts[1]) {
-    query += `and MinorVersion=${versionParts[1]} `;
+    query += `AND MinorVersion=${versionParts[1]} `;
   }
 
   // If Patch Version isn't set to LATEST, look for the exact Patch Version
   if (versionParts[2]) {
-    query += `and PatchVersion=${versionParts[2]} `;
+    query += `AND PatchVersion=${versionParts[2]} `;
   }
 
   // If Build Number isn't set to LATEST, look for the exact Package Version
   if (versionParts[3]) {
-    query += `and BuildNumber=${versionParts[3]} `;
+    query += `AND BuildNumber=${versionParts[3]} `;
   }
 
   // If Branch is specified, use it to filter
   if (branch) {
-    query += `and Branch='${branch.trim()}' `;
+    query += `AND Branch='${branch.trim()}' `;
   } else {
-    query += 'and Branch=NULL ';
+    query += 'AND Branch=NULL ';
   }
 
   // if the query is looking for a "LATEST", "Non-pinned" version, then we need
@@ -98,7 +100,7 @@ export const resolvePackageVersionId = async (
   const resultPackageVersionRecord = await connection.tooling.query(query);
 
   if (resultPackageVersionRecord?.records?.length === 0) {
-    throw new SfError(`Unable to find SubscriberPackageVersionId for dependent package ${packageName}`);
+    throw new SfError(`Unable to find SubscriberPackageVersionId for dependent package ${packageId}`);
   }
 
   return resultPackageVersionRecord.records[0]['SubscriberPackageVersionId'] as string;
