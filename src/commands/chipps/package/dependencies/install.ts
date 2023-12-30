@@ -23,6 +23,7 @@ import {
 } from '@salesforce/packaging';
 import { Optional } from '@salesforce/ts-types';
 import {
+  isPackageId,
   isPackageVersionId,
   isPackageVersionInstalled,
   reducePackageInstallRequestErrors,
@@ -130,8 +131,6 @@ export default class PackageDependenciesInstall extends SfCommand<PackageToInsta
     }),
   };
 
-  private subscriberPackageVersion!: SubscriberPackageVersion;
-
   public async run(): Promise<PackageToInstall[]> {
     const { flags } = await this.parse(PackageDependenciesInstall);
 
@@ -148,46 +147,31 @@ export default class PackageDependenciesInstall extends SfCommand<PackageToInsta
       throw messages.createError('error.apiVersionTooLow');
     }
 
-    // Introspect the project to find dependencies
-    const project = this.project;
-
     let packagesToInstall: PackageToInstall[] = [];
     const packageInstallRequests: PackageInstallRequest[] = [];
-    const dependenciesForDevHubResolution: PackageDirDependency[] = [];
-
-    const packageAliases = project.getPackageAliases();
-    const packageDirectories = project.getPackageDirectories();
+    const devHubDependencies: PackageDirDependency[] = [];
 
     this.spinner.start('Analyzing project to determine packages to install', '', { stdout: true });
 
-    for (const packageDirectory of packageDirectories) {
+    for (const packageDirectory of this.project?.getPackageDirectories() ?? []) {
       const dependencies = packageDirectory?.dependencies ?? [];
 
       for (const dependency of dependencies) {
-        const pakage = dependency.package; // 'package' is a restricted word in safe mode
-        const versionNumber = dependency.versionNumber;
-
-        if (pakage && versionNumber) {
+        if (dependency.package && dependency.versionNumber) {
           // This must be resolved by a dev hub
-          dependenciesForDevHubResolution.push(dependency);
+          devHubDependencies.push(dependency);
           continue;
         }
 
-        // Assume the package is not an alias
-        let packageVersionId = pakage;
-
-        // If we found the alias, then use that value as the packageVersionId
-        if (packageAliases?.[packageVersionId]) {
-          packageVersionId = packageAliases?.[packageVersionId] as string;
-        }
+        const packageVersionId = this.project.getPackageIdFromAlias(dependency.package) ?? dependency.package;
 
         if (!isPackageVersionId(packageVersionId)) {
-          throw messages.createError('error.noSubscriberPackageVersionId');
+          throw messages.createError('error.invalidSubscriberPackageVersionId', [dependency.package]);
         }
 
         packagesToInstall.push({
           Status: '',
-          PackageName: pakage,
+          PackageName: dependency.package,
           SubscriberPackageVersionId: packageVersionId,
         } as PackageToInstall);
       }
@@ -195,11 +179,11 @@ export default class PackageDependenciesInstall extends SfCommand<PackageToInsta
 
     this.spinner.stop();
 
-    if (dependenciesForDevHubResolution.length > 0) {
+    if (devHubDependencies.length > 0) {
       this.spinner.start('Resolving package versions from dev hub', '', { stdout: true });
 
       if (!flags['target-dev-hub']) {
-        throw messages.createError('error.devHubMissing');
+        throw messages.createError('error.targetDevHubMissing');
       }
 
       // Initialize the authorization for the provided dev hub
@@ -212,31 +196,30 @@ export default class PackageDependenciesInstall extends SfCommand<PackageToInsta
         throw messages.createError('error.targetDevHubConnectionFailed');
       }
 
-      for (const dependencyForDevHubResolution of dependenciesForDevHubResolution) {
-        const pakage = dependencyForDevHubResolution.package; // 'package' is a restricted word in safe mode
-        const versionNumber = dependencyForDevHubResolution.versionNumber;
-
-        if (!pakage || !versionNumber) {
+      for (const devHubDependency of devHubDependencies) {
+        if (!devHubDependency.package || !devHubDependency.versionNumber) {
           continue;
         }
 
-        // Assume the package is not an alias
-        let packageId = pakage;
+        const packageId = this.project.getPackageIdFromAlias(devHubDependency.package) ?? devHubDependency.package;
 
-        // If we found the alias, then use that value as the packageVersionId
-        if (packageAliases?.[packageId]) {
-          packageId = packageAliases?.[packageId] as string;
+        if (!isPackageId(packageId)) {
+          throw messages.createError('error.invalidPackage2Id', [devHubDependency.package]);
         }
 
         const packageVersionId = await resolvePackageVersionId(
           packageId,
-          versionNumber,
+          devHubDependency.versionNumber,
           flags.branch,
           targetDevHubConnection
         );
 
+        if (!isPackageVersionId(packageVersionId)) {
+          throw messages.createError('error.invalidSubscriberPackageVersionId', [devHubDependency.package]);
+        }
+
         packagesToInstall.push({
-          PackageName: pakage,
+          PackageName: devHubDependency.package,
           Status: '',
           SubscriberPackageVersionId: packageVersionId,
         } as PackageToInstall);
@@ -279,16 +262,14 @@ export default class PackageDependenciesInstall extends SfCommand<PackageToInsta
           }
 
           const installationKeyPair = installationKey.split(':');
-          let packageId = installationKeyPair[0];
-          const packageKey = installationKeyPair[1];
+          const packageVersionId = this.project.getPackageIdFromAlias(installationKeyPair[0]) ?? installationKeyPair[0];
+          const packageInstallationKey = installationKeyPair[1];
 
-          // Check if the key is an alias
-          if (packageAliases?.[packageId]) {
-            // If it is, get the id for the package
-            packageId = packageAliases?.[packageId] as string;
+          if (!isPackageVersionId(packageVersionId)) {
+            throw messages.createError('error.invalidSubscriberPackageVersionId', [packageVersionId]);
           }
 
-          installationKeyMap.set(packageId, packageKey);
+          installationKeyMap.set(packageVersionId, packageInstallationKey);
         }
         this.spinner.stop();
       }
@@ -296,20 +277,19 @@ export default class PackageDependenciesInstall extends SfCommand<PackageToInsta
       this.spinner.start('Installing dependent packages', '', { stdout: true });
 
       for (const packageToInstall of packagesToInstall) {
-        let installationKey = '';
-
         if (installType[flags['install-type']] === installType.Delta) {
           if (isPackageVersionInstalled(installedPackages, packageToInstall?.SubscriberPackageVersionId)) {
-            const packageName = packageToInstall?.PackageName;
-            const subscriberPackageVersionId = packageToInstall?.SubscriberPackageVersionId;
-
             packageToInstall.Status = 'Skipped';
-            this.log(`Package ${packageName} (${subscriberPackageVersionId}) is already installed and will be skipped`);
+
+            this.log(
+              `Package ${packageToInstall?.PackageName} (${packageToInstall?.SubscriberPackageVersionId}) is already installed and will be skipped`
+            );
 
             continue;
           }
         }
 
+        let installationKey = '';
         // Check if we have an installation key for this package
         if (installationKeyMap.has(packageToInstall?.SubscriberPackageVersionId)) {
           // If we do, set the installation key value
@@ -318,18 +298,18 @@ export default class PackageDependenciesInstall extends SfCommand<PackageToInsta
 
         this.spinner.start(`Preparing package ${packageToInstall.PackageName}`, '', { stdout: true });
 
-        this.subscriberPackageVersion = new SubscriberPackageVersion({
-          connection: targetOrgConnection,
+        const subscriberPackageVersion = new SubscriberPackageVersion({
           aliasOrId: packageToInstall?.SubscriberPackageVersionId,
+          connection: targetOrgConnection,
           password: installationKey,
         });
 
         const request: PackageInstallCreateRequest = {
-          SubscriberPackageVersionKey: await this.subscriberPackageVersion.getId(),
-          Password: installationKey,
           ApexCompileType: flags['apex-compile'],
+          Password: installationKey,
           SecurityType: securityType[flags['security-type']] as PackageInstallCreateRequest['SecurityType'],
           SkipHandlers: flags['skip-handlers']?.join(','),
+          SubscriberPackageVersionKey: await subscriberPackageVersion.getId(),
           UpgradeType: upgradeType[flags['upgrade-type']] as PackageInstallCreateRequest['UpgradeType'],
         };
 
@@ -370,7 +350,7 @@ export default class PackageDependenciesInstall extends SfCommand<PackageToInsta
             { stdout: true }
           );
 
-          await this.subscriberPackageVersion.waitForPublish({
+          await subscriberPackageVersion.waitForPublish({
             publishTimeout: flags['publish-wait'],
             publishFrequency: Duration.seconds(10),
             installationKey,
@@ -383,7 +363,7 @@ export default class PackageDependenciesInstall extends SfCommand<PackageToInsta
         // If the user has specified --upgradetype Delete, then prompt for confirmation
         // unless the noprompt option has been included.
         if (flags['upgrade-type'] === 'Delete') {
-          if ((await this.subscriberPackageVersion.getPackageType()) === 'Unlocked' && !flags['no-prompt']) {
+          if ((await subscriberPackageVersion.getPackageType()) === 'Unlocked' && !flags['no-prompt']) {
             const promptMsg = messages.getMessage('prompt.upgradeType');
             if (!(await this.confirm(promptMsg))) {
               throw messages.createError('info.canceledPackageInstall');
@@ -393,7 +373,7 @@ export default class PackageDependenciesInstall extends SfCommand<PackageToInsta
 
         // If the package has external sites, ask the user for permission to enable them
         // unless the noprompt option has been included.
-        const extSites = await this.subscriberPackageVersion.getExternalSites();
+        const extSites = await subscriberPackageVersion.getExternalSites();
         if (extSites) {
           let enableRss = true;
           if (!flags['no-prompt']) {
@@ -433,7 +413,7 @@ export default class PackageDependenciesInstall extends SfCommand<PackageToInsta
         let pkgInstallRequest: Optional<PackageInstallRequest>;
         try {
           this.spinner.start(`Installing package ${packageToInstall.PackageName}`, '', { stdout: true });
-          pkgInstallRequest = await this.subscriberPackageVersion.install(request, installOptions);
+          pkgInstallRequest = await subscriberPackageVersion.install(request, installOptions);
           this.spinner.stop();
         } catch (error: unknown) {
           if (error instanceof SfError && error.data) {

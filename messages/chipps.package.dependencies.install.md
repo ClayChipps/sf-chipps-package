@@ -94,19 +94,19 @@ Number of minutes to wait for installation status.
 
 This command is supported only on API versions 36.0 and higher.
 
-# error.devHubMissing
-
-This command requires a DevHub to be specified if providing a Package2Id instead of a SubscriberPackageVersionId.
-
 # error.installationKeyFormat
 
 Installation Key should have the key:value format of SubscriberPackageVersionId:Key.
 
 You can use an alias in place of the SubscriberPackageVersionId.
 
-# error.noSubscriberPackageVersionId
+# error.invalidPackage2Id
 
-Unable to determine the SubscriberPackageVersionId from the dependencies.
+Unable to determine a valid Package2Id for %s.
+
+# error.invalidSubscriberPackageVersionId
+
+Unable to determine a valid SubscriberPackageVersionId for %s.
 
 # error.packageInstall
 
@@ -123,6 +123,10 @@ Polling timeout exceeded
 # error.targetDevHubConnectionFailed
 
 Unable to establish connection to the org.
+
+# error.targetDevHubMissing
+
+This command requires a DevHub to be specified if providing a Package2Id and VersionNumber instead of a SubscriberPackageVersionId.
 
 # error.targetOrgConnectionFailed
 

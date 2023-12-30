@@ -13,13 +13,11 @@ type PackageInstallRequest = PackagingSObjects.PackageInstallRequest;
 export const PACKAGE_ID_PREFIX = '0Ho';
 export const PACKAGE_VERSION_ID_PREFIX = '04t';
 
-export const isPackageId = (inputToEvaluate: string): boolean => {
-  return inputToEvaluate ? inputToEvaluate.startsWith(PACKAGE_ID_PREFIX) : false;
-};
+export const isPackageId = (inputToEvaluate: string): boolean =>
+  inputToEvaluate ? inputToEvaluate.startsWith(PACKAGE_ID_PREFIX) : false;
 
-export const isPackageVersionId = (inputToEvaluate: string): boolean => {
-  return inputToEvaluate ? inputToEvaluate.startsWith(PACKAGE_VERSION_ID_PREFIX) : false;
-};
+export const isPackageVersionId = (inputToEvaluate: string): boolean =>
+  inputToEvaluate ? inputToEvaluate.startsWith(PACKAGE_VERSION_ID_PREFIX) : false;
 
 export const isPackageVersionInstalled = (
   installedPackages: InstalledPackages[],
