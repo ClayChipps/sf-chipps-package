@@ -3,9 +3,10 @@
     "alias": [],
     "command": "chipps:package:dependencies:install",
     "flagAliases": [],
-    "flagChars": ["a", "b", "i", "k", "l", "n", "r", "s", "t", "v", "w", "z"],
+    "flagChars": ["a", "b", "i", "k", "l", "o", "r", "s", "t", "v", "w", "z"],
     "flags": [
       "apex-compile",
+      "api-version",
       "branch",
       "install-type",
       "installation-key",
