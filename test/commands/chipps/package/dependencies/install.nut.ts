@@ -46,7 +46,7 @@ describe('chipps package dependencies install', () => {
 
   it('should install package dependencies with json', () => {
     const username = [...session.orgs.keys()][0];
-    const command = `chipps package dependencies install --install-type All --target-org ${username} --no-prompt`;
+    const command = `chipps package dependencies install --install-type All --target-org ${username} --no-prompt --json`;
     const output = execCmd<PackageToInstall[]>(command, {
       ensureExitCode: 0,
       timeout: Duration.minutes(30).milliseconds,
@@ -76,7 +76,7 @@ describe('chipps package dependencies install', () => {
 
   it('should skip installed packages with json', () => {
     const username = [...session.orgs.keys()][0];
-    const command = `chipps package dependencies install --install-type Delta --target-org ${username} --no-prompt`;
+    const command = `chipps package dependencies install --install-type Delta --target-org ${username} --no-prompt --json`;
     const output = execCmd<PackageToInstall[]>(command, {
       ensureExitCode: 0,
       timeout: Duration.minutes(30).milliseconds,
