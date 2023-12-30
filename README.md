@@ -41,7 +41,7 @@ To use your plugin, run using the local `./bin/dev` or `./bin/dev.cmd` file.
 
 ```bash
 # Run using local run file.
-./bin/dev.cmd hello world
+./bin/dev.cmd chipps package
 ```
 
 There should be no differences when running via the Salesforce CLI or using the local run file. However, it can be useful to link the plugin to do some additional testing or run your commands from anywhere on your machine.
@@ -57,8 +57,14 @@ sf plugins
 
 <!-- commands -->
 
-- [`sf chipps package dependencies install`](#sf-chipps-package-dependencies-install)
-- [`sf chipps package version cleanup`](#sf-chipps-package-version-cleanup)
+- [sf-chipps-package](#sf-chipps-package)
+  - [Install](#install)
+  - [Issues](#issues)
+  - [Contributing](#contributing)
+    - [Build](#build)
+  - [Commands](#commands)
+  - [`sf chipps package dependencies install`](#sf-chipps-package-dependencies-install)
+  - [`sf chipps package version cleanup`](#sf-chipps-package-version-cleanup)
 
 ## `sf chipps package dependencies install`
 
