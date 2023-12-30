@@ -8,8 +8,6 @@
 /* eslint-disable complexity */
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-unsafe-finally */
-import { dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { SfCommand, Flags } from '@salesforce/sf-plugins-core';
 import { AuthInfo, Connection, Messages, Lifecycle, PackageDirDependency, SfError } from '@salesforce/core';
 import { Duration } from '@salesforce/kit';
@@ -32,7 +30,7 @@ import {
 
 type PackageInstallRequest = PackagingSObjects.PackageInstallRequest;
 
-Messages.importMessagesDirectory(dirname(fileURLToPath(import.meta.url)));
+Messages.importMessagesDirectoryFromMetaUrl(import.meta.url);
 const messages = Messages.loadMessages('sf-chipps-package', 'chipps.package.dependencies.install');
 
 export type PackageToInstall = {

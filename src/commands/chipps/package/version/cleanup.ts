@@ -5,8 +5,6 @@
  * For full license text, see LICENSE.md file in the repo root or https://opensource.org/licenses/MIT
  */
 
-import { dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { SfCommand, Flags } from '@salesforce/sf-plugins-core';
 import { Messages, Logger } from '@salesforce/core';
 import {
@@ -17,7 +15,7 @@ import {
   PackageVersionOptions,
 } from '@salesforce/packaging';
 
-Messages.importMessagesDirectory(dirname(fileURLToPath(import.meta.url)));
+Messages.importMessagesDirectoryFromMetaUrl(import.meta.url);
 const messages = Messages.loadMessages('sf-chipps-package', 'chipps.package.version.cleanup');
 
 export type PackageVersionCleanupResult = {
