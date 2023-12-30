@@ -154,9 +154,7 @@ export default class PackageDependenciesInstall extends SfCommand<PackageToInsta
     this.spinner.start('Analyzing project to determine packages to install', '', { stdout: true });
 
     for (const packageDirectory of this.project?.getPackageDirectories() ?? []) {
-      const dependencies = packageDirectory?.dependencies ?? [];
-
-      for (const dependency of dependencies) {
+      for (const dependency of packageDirectory?.dependencies ?? []) {
         if (dependency.package && dependency.versionNumber) {
           // This must be resolved by a dev hub
           devHubDependencies.push(dependency);
