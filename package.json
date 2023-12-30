@@ -56,16 +56,16 @@
     ],
     "topics": {
       "chipps": {
-        "description": "description for chipps",
+        "description": "Commands created by @ClayChipps",
         "subtopics": {
           "package": {
-            "description": "description for chipps.package",
+            "description": "Commands for working with packages",
             "subtopics": {
               "dependencies": {
-                "description": "description for chipps.package.dependencies"
+                "description": "Commands for working with package dependencies"
               },
               "version": {
-                "description": "description for chipps.package.version"
+                "description": "Commands for working with package versions"
               }
             }
           }
