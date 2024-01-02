@@ -1,6 +1,6 @@
 # sf-chipps-package
 
-[![NPM](https://img.shields.io/npm/v/sf-chipps-package.svg?label=sf-chipps-package)](https://www.npmjs.com/package/sf-chipps-package) [![Downloads/week](https://img.shields.io/npm/dw/sf-chipps-package.svg)](https://npmjs.org/package/sf-chipps-package) [![Known Vulnerabilities](https://snyk.io/test/github/ClayChipps/sf-chipps-package/badge.svg)](https://snyk.io/test/github/ClayChipps/sf-chipps-package) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://raw.githubusercontent.com/salesforcecli/sf-chipps-package/main/LICENSE.txt)
+[![NPM](https://img.shields.io/npm/v/sf-chipps-package.svg?label=sf-chipps-package)](https://www.npmjs.com/package/sf-chipps-package) [![Downloads/week](https://img.shields.io/npm/dw/sf-chipps-package.svg)](https://npmjs.org/package/sf-chipps-package) [![Known Vulnerabilities](https://snyk.io/test/github/ClayChipps/sf-chipps-package/badge.svg)](https://snyk.io/test/github/ClayChipps/sf-chipps-package) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://raw.githubusercontent.com/sf-chipps-package/main/LICENSE.txt)
 
 ## Install
 
