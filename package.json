@@ -48,7 +48,6 @@
   ],
   "license": "MIT",
   "oclif": {
-    "commands": "lib/commands",
     "additionalVersionFlags": [
       "-v"
     ],
@@ -56,6 +55,7 @@
       "-h"
     ],
     "bin": "sf",
+    "commands": "lib/commands",
     "devPlugins": [
       "@oclif/plugin-command-snapshot",
       "@oclif/plugin-help",
