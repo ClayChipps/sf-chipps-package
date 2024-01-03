@@ -5,7 +5,7 @@
   "author": "@ClayChipps",
   "bugs": "https://github.com/ClayChipps/sf-chipps-package/issues",
   "dependencies": {
-    "@oclif/core": "^3.15.0",
+    "@oclif/core": "^3.15.1",
     "@salesforce/core": "^6.4.2",
     "@salesforce/kit": "^3.0.15",
     "@salesforce/packaging": "^3.0.15",
@@ -48,20 +48,22 @@
   ],
   "license": "MIT",
   "oclif": {
-    "commands": "./lib/commands",
-    "bin": "sf",
+    "commands": "lib/commands",
     "additionalVersionFlags": [
       "-v"
     ],
     "additionalHelpFlags": [
       "-h"
     ],
+    "bin": "sf",
     "devPlugins": [
       "@oclif/plugin-command-snapshot",
       "@oclif/plugin-help",
       "@salesforce/plugin-command-reference"
     ],
+    "flexibleTaxonomy": true,
     "plugins": [],
+    "repositoryPrefix": "<%- repo %>/blob/<%- version %>/<%- commandPath %>",
     "topics": {
       "chipps": {
         "description": "Commands created by @ClayChipps",
@@ -80,7 +82,6 @@
         }
       }
     },
-    "flexibleTaxonomy": true,
     "topicSeparator": " "
   },
   "repository": "ClayChipps/sf-chipps-package",
@@ -97,11 +98,11 @@
     "postpack": "shx rm -f oclif.manifest.json oclif.lock",
     "prepack": "sf-prepack",
     "prepare": "sf-install",
+    "readme": "oclif readme --no-aliases --repository-prefix '<%- repo %>/blob/<%- version %>/<%- commandPath %>'",
     "test": "wireit",
     "test:nuts": "nyc mocha \"**/*.nut.ts\" --slow 4500 --timeout 1200000 --parallel --jobs 5",
     "test:only": "wireit",
-    "test:watch": "mocha --watch \"./test/**/*.test.ts\"",
-    "version": "oclif readme"
+    "test:watch": "mocha --watch \"./test/**/*.test.ts\""
   },
   "publishConfig": {
     "access": "public"
