@@ -149,7 +149,7 @@ export default class PackageDependenciesInstall extends SfCommand<PackageToInsta
     const packageInstallRequests: PackageInstallRequest[] = [];
     const devHubDependencies: PackageDirDependency[] = [];
 
-    this.spinner.start('Analyzing project to determine packages to install', '', { stdout: true });
+    this.spinner.start('Analyzing project to determine packages to install', '\n', { stdout: true });
 
     for (const packageDirectory of this.project?.getPackageDirectories() ?? []) {
       for (const dependency of packageDirectory?.dependencies ?? []) {
@@ -176,7 +176,7 @@ export default class PackageDependenciesInstall extends SfCommand<PackageToInsta
     this.spinner.stop();
 
     if (devHubDependencies.length > 0) {
-      this.spinner.start('Resolving package versions from dev hub', '', { stdout: true });
+      this.spinner.start('Resolving package versions from dev hub', '\n', { stdout: true });
 
       if (!flags['target-dev-hub']) {
         throw messages.createError('error.targetDevHubMissing');
@@ -225,7 +225,7 @@ export default class PackageDependenciesInstall extends SfCommand<PackageToInsta
     }
 
     // Filter out duplicate packages before we start the install process
-    this.spinner.start('Checking for duplicate package dependencies', '', { stdout: true });
+    this.spinner.start('Checking for duplicate package dependencies', '\n', { stdout: true });
     packagesToInstall = packagesToInstall.filter(
       (packageToInstall, index, self) =>
         index === self.findIndex((t) => t.SubscriberPackageVersionId === packageToInstall?.SubscriberPackageVersionId)
@@ -241,7 +241,7 @@ export default class PackageDependenciesInstall extends SfCommand<PackageToInsta
     const installationKeyMap = new Map<string, string>();
 
     if (flags['installation-key']) {
-      this.spinner.start('Processing package installation keys', '', { stdout: true });
+      this.spinner.start('Processing package installation keys', '\n', { stdout: true });
       for (let installationKey of flags['installation-key']) {
         installationKey = installationKey.trim();
 
@@ -268,12 +268,12 @@ export default class PackageDependenciesInstall extends SfCommand<PackageToInsta
 
     // If precheck is enabled, get the currently installed packages
     if (installType[flags['install-type']] === installType.Delta) {
-      this.spinner.start('Analyzing which packages to install', '', { stdout: true });
+      this.spinner.start('Analyzing which packages to install', '\n', { stdout: true });
       installedPackages = await SubscriberPackageVersion.installedList(targetOrgConnection);
       this.spinner.stop();
     }
 
-    this.spinner.start('Installing dependent packages', '', { stdout: true });
+    this.spinner.start('Installing dependent packages', '\n', { stdout: true });
 
     for (const packageToInstall of packagesToInstall) {
       if (installType[flags['install-type']] === installType.Delta) {
@@ -295,7 +295,7 @@ export default class PackageDependenciesInstall extends SfCommand<PackageToInsta
         installationKey = installationKeyMap.get(packageToInstall?.SubscriberPackageVersionId) ?? '';
       }
 
-      this.spinner.start(`Preparing package ${packageToInstall.PackageName}`, '', { stdout: true });
+      this.spinner.start(`Preparing package ${packageToInstall.PackageName}`, '\n', { stdout: true });
 
       const subscriberPackageVersion = new SubscriberPackageVersion({
         aliasOrId: packageToInstall?.SubscriberPackageVersionId,
@@ -333,20 +333,14 @@ export default class PackageDependenciesInstall extends SfCommand<PackageToInsta
             timeThen = Date.now();
             remainingTime = Duration.milliseconds(remainingTime.milliseconds - elapsedTime.milliseconds);
             const status =
-              publishStatus === 'NO_ERRORS_DETECTED'
-                ? messages.getMessage('info.availableForInstallation')
-                : messages.getMessage('info.unavailableForInstallation');
-            this.spinner.start(
-              messages.getMessage('info.packagePublishWaitingStatus', [remainingTime.minutes, status]),
-              '',
-              { stdout: true }
-            );
+              publishStatus === 'NO_ERRORS_DETECTED' ? 'Available for installation' : 'Unavailable for installation';
+            this.spinner.status = `${remainingTime.minutes} minutes remaining until timeout. Publish status: ${status}\n`;
           }
         );
 
         this.spinner.start(
-          messages.getMessage('info.packagePublishWaitingStatus', [remainingTime.minutes, 'Querying Status']),
-          '',
+          `${remainingTime.minutes} minutes remaining until timeout. Publish status: 'Querying Status'`,
+          '\n',
           { stdout: true }
         );
 
@@ -395,17 +389,14 @@ export default class PackageDependenciesInstall extends SfCommand<PackageToInsta
             const elapsedTime = Duration.milliseconds(Date.now() - timeThen);
             timeThen = Date.now();
             remainingTime = Duration.milliseconds(remainingTime.milliseconds - elapsedTime.milliseconds);
-            this.spinner.status = messages.getMessage('info.packageInstallWaitingStatus', [
-              remainingTime.minutes,
-              piRequest.Status,
-            ]);
+            this.spinner.status = `${remainingTime.minutes} minutes remaining until timeout. Install status: ${piRequest.Status}\n`;
           }
         );
       }
 
       let pkgInstallRequest: Optional<PackageInstallRequest>;
       try {
-        this.spinner.start(`Installing package ${packageToInstall.PackageName}`, '', { stdout: true });
+        this.spinner.start(`Installing package ${packageToInstall.PackageName}`, '\n', { stdout: true });
         pkgInstallRequest = await subscriberPackageVersion.install(request, installOptions);
         this.spinner.stop();
       } catch (error: unknown) {

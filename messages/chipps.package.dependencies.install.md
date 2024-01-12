@@ -136,30 +136,6 @@ Unable to establish connection to the org.
 
 We canceled this package installation per your request.
 
-# info.packageInstallSuccess
-
-Successfully installed package [%s]
-
-# info.availableForInstallation
-
-Available for installation
-
-# info.packageInstallWaiting
-
-Waiting %s minutes for package install to complete.
-
-# info.packageInstallWaitingStatus
-
-%d minutes remaining until timeout. Install status: %s
-
-# info.packagePublishWaitingStatus
-
-%d minutes remaining until timeout. Publish status: %s
-
-# info.unavailableForInstallation
-
-Unavailable for installation
-
 # prompt.enableRss
 
 This package might send or receive data from these third-party websites:
