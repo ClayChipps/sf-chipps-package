@@ -1,3 +1,12 @@
+## [1.2.2](https://github.com/ClayChipps/sf-chipps-package/compare/1.2.1...1.2.2) (2024-01-12)
+
+
+### Bug Fixes
+
+* incorrect spinner line endings ([4a0fc83](https://github.com/ClayChipps/sf-chipps-package/commit/4a0fc83f1f17b67b3697ea2c3d422473d43e71c4))
+
+
+
 ## [1.2.1](https://github.com/ClayChipps/sf-chipps-package/compare/1.2.0...1.2.1) (2024-01-10)
 
 
