@@ -1,3 +1,12 @@
+## [1.2.3](https://github.com/ClayChipps/sf-chipps-package/compare/1.2.2...1.2.3) (2024-02-01)
+
+
+### Bug Fixes
+
+* **deps:** bump @oclif/core from 3.16.0 to 3.18.1 ([ee86711](https://github.com/ClayChipps/sf-chipps-package/commit/ee867111cbe2d7c20151a56f3a5f459c0bfe5c5e))
+
+
+
 ## [1.2.2](https://github.com/ClayChipps/sf-chipps-package/compare/1.2.1...1.2.2) (2024-01-12)
 
 
