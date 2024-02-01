@@ -114,6 +114,8 @@ export default class PackageVersionCleanup extends SfCommand<PackageVersionClean
 
     const results: PackageVersionCleanupResult[] = [];
 
+    this.spinner.stop();
+
     this.spinner.start('Deleting the package versions...');
 
     const promiseResults = await Promise.allSettled(packageVersionDeletePromiseRequests);
