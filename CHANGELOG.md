@@ -1,3 +1,12 @@
+## [1.2.7](https://github.com/ClayChipps/sf-chipps-package/compare/1.2.6...1.2.7) (2024-02-01)
+
+
+### Bug Fixes
+
+* incorrect cleanup spinner ([3997fdb](https://github.com/ClayChipps/sf-chipps-package/commit/3997fdb2795447bd52fa504aaae39648bac9de7b))
+
+
+
 ## [1.2.6](https://github.com/ClayChipps/sf-chipps-package/compare/1.2.5...1.2.6) (2024-02-01)
 
 
