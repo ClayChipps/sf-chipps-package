@@ -1,3 +1,12 @@
+## [1.2.12](https://github.com/ClayChipps/sf-chipps-package/compare/1.2.11...1.2.12) (2024-02-22)
+
+
+### Bug Fixes
+
+* **deps:** bump @salesforce/core from 6.5.3 to 6.5.5 ([f65d1df](https://github.com/ClayChipps/sf-chipps-package/commit/f65d1df437ac61efb15443cf552fb1e2f57c8fc3))
+
+
+
 ## [1.2.11](https://github.com/ClayChipps/sf-chipps-package/compare/1.2.10...1.2.11) (2024-02-22)
 
 
