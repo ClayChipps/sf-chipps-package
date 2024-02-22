@@ -1,3 +1,12 @@
+## [1.2.9](https://github.com/ClayChipps/sf-chipps-package/compare/1.2.8...1.2.9) (2024-02-22)
+
+
+### Bug Fixes
+
+* **deps:** bump @salesforce/packaging from 3.2.12 to 3.2.15 ([93e6c62](https://github.com/ClayChipps/sf-chipps-package/commit/93e6c6202c025e64d7ce2d443e4ae0f2183b197a))
+
+
+
 ## [1.2.8](https://github.com/ClayChipps/sf-chipps-package/compare/1.2.7...1.2.8) (2024-02-10)
 
 
