@@ -19,7 +19,7 @@
     "@salesforce/ts-sinon": "1.4.19",
     "@types/shelljs": "^0.8.15",
     "eslint-plugin-sf-plugin": "^1.17.3",
-    "oclif": "^4.4.8",
+    "oclif": "^4.4.19",
     "sf-chipps-dev-scripts": "^1.1.0",
     "shelljs": "^0.8.5",
     "shx": "0.3.4",
